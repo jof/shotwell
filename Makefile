@@ -512,6 +512,25 @@ package:
 	rm -f $(DIST_TAR_GZ)
 	rm -f $(DIST_TAR_BZ2)
 
+.PHONY: build-deps
+build-deps:
+	@DPKG_CHECKBUILDDEPS=`dpkg-checkbuilddeps 2>&1`; \
+	  if [ $$? -eq 127 ]; then \
+	    echo "Do you have the dpkg-dev package installed?"; \
+	    echo "Try running \"sudo apt-get install build-essential\""; \
+	  elif [ $$? -eq 1 ]; then \
+	    BUILDDEPS=`echo $${DPKG_CHECKBUILDDEPS} | sed 's|dpkg-checkbuilddeps: Unmet build dependencies: ||; s|\s\+([^\)]*)||g'`; \
+	    echo -n "ERROR: You're missing some build dependencies needed to build $(PROGRAM): "; \
+	    echo "$$BUILDDEPS"; \
+	    echo ""; \
+	    INSTALL_COMMAND="sudo apt-get -y install $$BUILDDEPS"; \
+	    echo "Shall I automatically try and install them now with this command?: $$INSTALL_COMMAND"; \
+	    read -p "Hit any key to continue, Ctrl-C to quit." foobarbaz; \
+	    $$INSTALL_COMMAND; \
+	  else \
+	    exit 0; \
+	  fi
+
 .PHONY: dist
 dist:
 	mkdir -p $(PROGRAM)-$(VERSION)
